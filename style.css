@@ -2,7 +2,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: Arial, Helvetica, sans-serif;
-    background-color: #111;
+    background-color: #e20f0f;
     color: white;
     text-align: center;
 }
@@ -14,7 +14,7 @@ h1 {
 #game-container {
     width: 800px;
     height: 450px;
-    border: 2px solid white;
+    border: 2px solid rgb(51, 201, 14);
     margin: 20px auto;
     display: flex;
     align-items: center;
@@ -29,8 +29,27 @@ h1 {
 
 #gus {
     transition: 0.1s;
-    width: 40px;
+    width: 80px;
     height: 40px;
-    background-color: white;
+    background-color: rgb(243, 238, 238);
     position: absolute;
+
+}
+
+#treat {
+    position: absolute;
+    background-color: rgb(0, 255, 170);
+    border-radius: 30%;
+    border-color: aliceblue;
+    height: 30px;
+    width: 30px;
+}
+
+#enemy {
+    position: absolute;
+    background-color: rgb(240, 11, 11);
+    border-radius: 30%;
+    border-color: aliceblue;
+    height: 30px;
+    width: 30px;
 }
