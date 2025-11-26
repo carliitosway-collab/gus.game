@@ -8,7 +8,7 @@ class Game {
         this.scoreText = document.getElementById("scoreText");
 
         this.gus = null;
-        this.gusSize = 40;
+        this.gusSize = 80;
         this.gusX = 0;
         this.gusY = 0;
 
@@ -22,15 +22,13 @@ class Game {
 
         this.step = 10;
 
-        this.treat = null;
-        this.treatSize = 30;
-        this.treatX = 0;
-        this.treatY = 0;
+        this.treats = [];
         this.treatSpeed = 4;
-        this.treatActive = false;
-        this.treatTimeout = null;
-        this.treatMinDelay = 800;
-        this.treatMaxDelay = 2000;
+        this.treatSize = 30;
+        this.maxTreats = 3;
+        this.treatMinSpeed = 2;
+        this.treatMaxSpeed = 5;
+
 
         this.enemy = null;
         this.enemySize = 30;
@@ -60,6 +58,12 @@ class Game {
     handleKeyDown(event) {
         console.log("Tecla pulsada:", event.code);
 
+        if (this.isGameOver && event.code === "Enter") {
+
+            this.restartGame();
+            return;
+        }
+
         if (event.code === "Space") {
             if (!this.gus && !this.isGameOver) {
                 this.starGame();
@@ -74,29 +78,65 @@ class Game {
         }
     }
 
+    handleGameOver() {
+        this.isGameOver = true;
+
+        this.statusText.style.display = "block";
+        this.statusText.innerText = "Game Over - pulsa ENTER para reiniciar";
+
+        if (this.treatInterval) clearInterval(this.treatInterval);
+        if (this.enemyInterval) clearInterval(this.enemyInterval);
+    }
+
+    restartGame() {
+        this.isGameOver = false;
+        this.score = 0;
+
+        this.statusText.style.display = "none";
+        this.scoreText.innerText = `Puntos: ${this.score}`;
+
+        this.gameContainer.innerHTML = "";
+
+        this.gus = null;
+        this.treats = [];
+        this.enemy = null;
+
+        if (this.treatInterval) clearInterval(this.treatInterval);
+        if (this.enemyInterval) clearInterval(this.enemyInterval);
+        if (this.enemyTimeout) clearTimeout(this.enemyTimeout);
+        this.treatInterval = null;
+        this.enemyInterval = null;
+        this.enemyTimeout = null;
+
+
+        setTimeout(() => {
+            this.statusText.style.display = "block";
+            this.statusText.innerText = "Pulsa ESPACIO para comenzar";
+        }, 300);
+    }
+
+
+
+
     starGame() {
         this.statusText.style.display = "none";
         this.createGus();
-        this.createTreat();
-        //setInterval(() => this.createTreat(), 3000);
+        this.createTreats();
         this.createEnemy();
-        //setInterval(() => this.createEnemy(), 3000);
         this.updateScoreText();
     }
 
     createGus() {
         const gus = document.createElement("div");
         gus.id = "gus";
-
-
         this.gameContainer.appendChild(gus);
         this.gus = gus;
+        this.gus.classList.add("gus-right");
 
-        const centerX = (this.gameContainer.clientWidth - this.gusSize) / 2;
-        const centerY = (this.gameContainer.clientHeight - this.gusSize) / 2;
+        this.gusSize = 80;
 
-        this.gusX = centerX;
-        this.gusY = centerY;
+        this.gusX = (this.gameContainer.clientWidth - this.gusSize) / 2;
+        this.gusY = this.gameContainer.clientHeight - this.gusSize
 
         this.updateGusposition();
     }
@@ -104,90 +144,107 @@ class Game {
 
     moveGus(key) {
 
-        if (key === "ArrowUp") {
-            this.gusY -= this.step;
-        } else if (key === "ArrowDown") {
-            this.gusY += this.step;
-        } else if (key === "ArrowLeft") {
+        const gusWidth = 80;
+        const containerWidth = this.gameContainer.clientWidth;
+        const marginX = 20;
+
+        if (key === "ArrowLeft") {
             this.gusX -= this.step;
+
+            this.gus.classList.remove("gus-right", "gus-left");
+            this.gus.classList.add("gus-left");
+
         } else if (key === "ArrowRight") {
             this.gusX += this.step;
+
+
+            this.gus.classList.remove("gus-left", "gus-right");
+            this.gus.classList.add("gus-right");
         } else {
             return;
         }
 
-        const maxX = this.gameContainer.clientWidth - this.gusSize;
-        const maxY = this.gameContainer.clientHeight - this.gusSize;
+        const minX = marginX;
+        const maxX = containerWidth - gusWidth - marginX;
 
-        if (this.gusX < 0) this.gusX = 0;
+        if (this.gusX < minX) this.gusX = minX;
         if (this.gusX > maxX) this.gusX = maxX;
-        if (this.gusY < 0) this.gusY = 0;
-        if (this.gusY > maxY) this.gusY = maxY;
 
         this.updateGusposition();
+
     }
 
-    createTreat() {
-        const treat = document.createElement("div");
-        treat.id = "treat";
+    createTreats() {
+        const treatTypes = ["normal", "bonus", "fast"];
 
-        this.gameContainer.appendChild(treat);
-        this.treat = treat;
+        for (let i = 0; i < this.maxTreats; i++) {
+            const treat = document.createElement("div");
+            treat.classList.add("treat");
+            treat.style.position = "absolute";
+            treat.style.width = `${this.treatSize}px`;
+            treat.style.height = `${this.treatSize}px`;
 
-        this.treatActive = true;
-        this.placeTreatRandomly();
+            const randomType = treatTypes[Math.floor(Math.random() * treatTypes.length)];
+            treat.classList.add(`treat--${randomType}`);
+
+            this.gameContainer.appendChild(treat);
+
+            const treatObj = {
+                el: treat,
+                x: 0,
+                y: 0,
+                active: true,
+                type: randomType,
+                speed: this.treatMinSpeed + Math.random() * (this.treatMaxSpeed - this.treatMinSpeed)
+            };
+
+            this.placeTreatRandomly(treatObj);
+            this.treats.push(treatObj);
+        }
 
         this.treatInterval = setInterval(() => {
-            this.moveTreat();
-            this.checkCollision(); // && this.checkCollision();
+            this.moveTreats();
+            this.checkTreatCollisions();
         }, 50);
     }
 
-    moveTreat() {
-        if (!this.treat) return;
-        if (!this.treatActive) return;
+    moveTreats() {
 
-        this.treatX -= this.treatSpeed;
+        const marginBottom = 10;
+        const maxY = this.gameContainer.clientHeight - this.treatSize - marginBottom;
 
-        if (this.treatX < - this.treatSize) {
-            this.despawnTreatAndScheduleRespawn();
-            return;
-        }
+        this.treats.forEach((treatObj) => {
+            if (!treatObj.active) return;
 
-        this.treat.style.left = `${this.treatX}px`;
-        this.treat.style.top = `${this.treatY}px`;
+            treatObj.y += treatObj.speed;
+
+            if (treatObj.y > maxY) {
+                setTimeout(() => {
+                    this.placeTreatRandomly(treatObj);
+                }, Math.random() * 1000);
+                return;
+            }
+
+            treatObj.el.style.left = `${treatObj.x}px`;
+            treatObj.el.style.top = `${treatObj.y}px`;
+        });
     }
 
-    placeTreatRandomly() {
-        if (!this.treat) return;
+    placeTreatRandomly(treatObj) {
 
         const containerWidth = this.gameContainer.clientWidth;
-        const maxY = this.gameContainer.clientHeight - this.treatSize;
+        const containerHeight = this.gameContainer.clientHeight;
 
-        this.treatX = containerWidth - this.treatSize;
-        this.treatY = Math.floor(Math.random() * maxY);
+        const marginX = 20;
+        const maxX = containerWidth - this.treatSize - marginX;
 
-        this.treat.style.width = `${this.treatSize}px`;
-        this.treat.style.height = `${this.treatSize}px`;
-        this.treat.style.left = `${this.treatX}px`;
-        this.treat.style.top = `${this.treatY}px`;
-        this.treat.style.position = "absolute";
-    }
+        treatObj.x = Math.floor(marginX + Math.random() * maxX);
 
-    despawnTreatAndScheduleRespawn() {
-        if (!this.treat) return;
+        const extraOffset = Math.random() * containerHeight;
+        treatObj.y = -this.treatSize - extraOffset;
 
-        this.treatActive = false;
-        this.treat.style.display = "none";
-
-        const delay = Math.floor(Math.random() * (this.treatMaxDelay - this.treatMinDelay + 1)
-        ) + this.treatMinDelay;
-
-        this.treatTimeout = setTimeout(() => {
-            this.placeTreatRandomly();
-            this.treat.style.display = "block";
-            this.treatActive = true;
-        }, delay);
+        treatObj.el.style.left = `${treatObj.x}px`;
+        treatObj.el.style.top = `${treatObj.y}px`;
     }
 
     createEnemy() {
@@ -214,9 +271,13 @@ class Game {
         if (this.isGameOver) return;
         if (!this.enemyActive) return;
 
-        this.enemyX -= this.enemySpeed;
 
-        if (this.enemyX < - this.enemySize) {
+        this.enemyY += this.enemySpeed;
+
+        const marginBottom = 10;
+        const maxY = this.gameContainer.clientHeight - this.enemySize - marginBottom;
+
+        if (this.enemyY > maxY) {
             this.despawnEnemyAndScheduleRespawn();
             return;
         }
@@ -229,10 +290,14 @@ class Game {
         if (!this.enemy) return;
 
         const containerWidth = this.gameContainer.clientWidth;
-        const maxY = this.gameContainer.clientHeight - this.enemySize;
 
-        this.enemyX = containerWidth - this.enemySize,
-            this.enemyY = Math.floor(Math.random() * maxY);
+        const marginX = 20;
+
+        const maxX = containerWidth - this.enemySize - marginX;
+
+        this.enemyX = Math.floor(marginX + Math.random() * maxX);
+
+        this.enemyY = -this.enemySize;
 
         this.enemy.style.width = `${this.enemySize}px`;
         this.enemy.style.height = `${this.enemySize}px`;
@@ -246,6 +311,7 @@ class Game {
 
         this.enemyActive = false;
         this.enemy.style.display = "none";
+
 
         const delay = Math.floor(Math.random() * (this.enemyMaxDelay - this.enemyMinDelay + 1)
         ) + this.enemyMinDelay;
@@ -270,30 +336,34 @@ class Game {
         this.scoreText.innerText = `Puntos ${this.score}`
     }
 
-    checkCollision() {
+    checkTreatCollisions() {
 
-        if (!this.gus || !this.treat) return;
+        this.treats.forEach((treatObj) => {
+            if (!treatObj.active) return;
 
-        const gusRect = this.gus.getBoundingClientRect();
-        const treatRect = this.treat.getBoundingClientRect();
+            const gusLeft = this.gusX;
+            const gusRigth = this.gusX + this.gusSize;
+            const gusTop = this.gusY;
+            const gusBotton = this.gusY + this.gusSize;
 
-        const padding = 10;
-        const treatPaddig = 4
+            const treatLeft = treatObj.x;
+            const treatRight = treatObj.x + this.treatSize;
+            const treatTop = treatObj.y;
+            const treatBottom = treatObj.y + this.treatSize;
 
-        const overlap =
-            gusRect.left + this.gusPadding < treatRect.right - this.treatPadding &&
-            gusRect.right - this.gusPadding > treatRect.left + this.treatPadding &&
-            gusRect.top + this.gusPadding < treatRect.bottom - this.treatPadding &&
-            gusRect.bottom - this.gusPadding > treatRect.top + this.treatPadding;
+            const isColliding =
+                gusLeft < treatRight &&
+                gusRigth > treatLeft &&
+                gusTop < treatBottom &&
+                gusBotton > treatTop;
 
-        if (overlap) {
-            this.score += 1;
-            this.updateScoreText();
+            if (isColliding) {
+                this.score++;
+                this.updateScoreText();
 
-            this.treat.style.display = "none"
-
-            this.despawnTreatAndScheduleRespawn();
-        }
+                this.placeTreatRandomly(treatObj);
+            }
+        });
     }
 
     checkEnemyCollision() {
@@ -317,16 +387,6 @@ class Game {
         this.handleGameOver();
     }
 
-
-    handleGameOver() {
-        this.isGameOver = true;
-
-        this.statusText.style.display = "block";
-        this.statusText.innerText = "Game Over - pulsa F5 para reiniciar";
-
-        if (this.treatInterval) clearInterval(this.treatInterval);
-        if (this.enemyInterval) clearInterval(this.enemyInterval);
-    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
