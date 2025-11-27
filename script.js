@@ -7,12 +7,19 @@ class Game {
         this.statusText = document.getElementById("statusText");
         this.scoreText = document.getElementById("scoreText");
 
+        this.startScreen = document.getElementById("start-screen");
+        this.startContent = document.getElementById("start-content");
+        this.gameOverContent = document.getElementById("gameover-content");
+        this.finalScore = document.getElementById("finalScoreElement");
+        this.replayButton = document.getElementById("replayButton");
+
+
         this.gus = null;
         this.gusSize = 80;
         this.gusX = 0;
         this.gusY = 0;
 
-        this.playerSpeed = 10;
+        this.playerSpeed = 30;
 
         this.score = 0;
 
@@ -20,32 +27,89 @@ class Game {
         this.treatPadding = 4;
         this.enemyPadding = 6;
 
-        this.step = 10;
+        this.step = 30;
+
+
+        this.maxLives = 3;
+        this.lives = this.maxLives;
+
+        this.progressContainer = document.getElementById("progressContainer");
+        this.progressFill = document.getElementById("progressFill");
+        this.pointsPerLife = 30;
+        this.progressPoints = 0;
+
+        this.isHitCooldown = false;
+        this.hitCooldownTime = 500;
+
+        this.livesContainer = document.getElementById("livesContainer");
 
         this.treats = [];
-        this.treatSpeed = 4;
         this.treatSize = 30;
         this.maxTreats = 3;
         this.treatMinSpeed = 2;
         this.treatMaxSpeed = 5;
+        this.treatTypes = [
+            { name: "normal", value: 1, speedFactor: 1 },
+            { name: "bonus", value: 3, speedFactor: 2 },
+            { name: "fast", value: 4, speedFactor: 3 },
+            { name: "rare", value: 6, speedFactor: 2 },
+            { name: "cookie", value: 5, speedFactor: 0.8 },
+        ];
 
-
-        this.enemy = null;
+        this.enemies = [];
         this.enemySize = 30;
-        this.enemyX = 0;
-        this.enemyY = 0;
-        this.enemySpeed = 5;
-        this.enemyActive = false;
-        this.enemyTimeout = null;
-        this.enemyMinDelay = 1000;
-        this.enemyMaxDelay = 2500;
+        this.maxEnemies = 6;
+        this.enemySpeed = 4;
+        this.enemyMinSpeed = 3;
+        this.enemyMaxSpeed = 6;
+        this.enemyInterval = null;
+        this.enemyTypes = [
+
+            { id: 1, level: "easy", speedFactor: 1, size: 40, className: "enemy1-easy" },
+            { id: 1, level: "medium", speedFactor: 1.4, size: 45, className: "enemy1-medium" },
+            { id: 1, level: "hard", speedFactor: 1.8, size: 50, className: "enemy1-hard" },
+
+            { id: 2, level: "easy", speedFactor: 1, size: 40, className: "enemy2-easy" },
+            { id: 2, level: "medium", speedFactor: 1.4, size: 45, className: "enemy2-medium" },
+            { id: 2, level: "hard", speedFactor: 1.8, size: 50, className: "enemy2-hard" },
+        ]
 
         this.isGameOver = false;
-        this.enemyInterval = null;
+        this.treatInterval = null;
+
+        this.audioStarted = false;
+
+
+        this.musicMenu = new Audio("./assets/sounds/inicio.playhouse.mp3");
+        this.musicMenu.volume = 0.5;
+        this.musicMenu.loop = true;
+
+        this.musicGame = new Audio("./assets/sounds/game.smile.mp3");
+        this.musicGame.volume = 0.5;
+        this.musicGame.loop = true;
+
+
+        this.soundHit = new Audio("./assets/sounds/cat-meow.wav");
+        this.soundGameOver = new Audio("./assets/sounds/game-over.wav");
+        this.soundTreat = new Audio("./assets/sounds/chewing.wav");
+
+        this.soundHit.volume = 0.6;
+        this.soundGameOver.volume = 0.8;
+        this.soundTreat.volume = 0.8;
 
     }
 
     init() {
+
+        this.showStartScreen();
+
+        if (this.replayButton) {
+            this.replayButton.addEventListener("click", () => {
+                if (this.isGameOver) {
+                    this.restartGame();
+                }
+            });
+        }
         setTimeout(() => {
             this.statusText.innerText = "Pulsa ESPACIO para comenzar";
         }, 2000);
@@ -53,10 +117,58 @@ class Game {
         document.addEventListener("keydown", (event) =>
             this.handleKeyDown(event)
         );
+
+        this.musicMenu.play();
+    }
+
+    showStartScreen() {
+        if (this.startScreen) {
+            this.startScreen.style.display = "flex";
+        }
+
+        if (this.startContent) {
+            this.startContent.style.display = "block";
+        }
+
+        if (this.gameOverContent) {
+            this.gameOverContent.style.display = "none";
+        }
+    }
+
+    showGameOverScreen() {
+        if (this.startScreen) {
+            this.startScreen.style.display = "flex";
+        }
+
+        if (this.startContent) {
+            this.startContent.style.display = "none";
+        }
+
+        if (this.gameOverContent) {
+            this.gameOverContent.style.display = "block";
+        }
+
+        if (this.finalScore) {
+            this.finalScore.innerText = this.score;
+        }
+    }
+
+    hideStartScreen() {
+        if (this.startScreen) {
+            this.startScreen.style.display = "none";
+        }
     }
 
     handleKeyDown(event) {
         console.log("Tecla pulsada:", event.code);
+
+        if (!this.audioStarted) {
+            if (this.musicMenu) {
+                this.musicMenu.currentTime = 0;
+                this.musicMenu.play();
+            }
+            this.audioStarted = true;
+        }
 
         if (this.isGameOver && event.code === "Enter") {
 
@@ -66,6 +178,7 @@ class Game {
 
         if (event.code === "Space") {
             if (!this.gus && !this.isGameOver) {
+                this.hideStartScreen();
                 this.starGame();
             }
             return;
@@ -79,55 +192,112 @@ class Game {
     }
 
     handleGameOver() {
-        this.isGameOver = true;
 
-        this.statusText.style.display = "block";
-        this.statusText.innerText = "Game Over - pulsa ENTER para reiniciar";
+        this.musicMenu.currentTime = 0;
+        this.musicMenu.play();
+
+        if (this.music) this.music.pause();
+
+        this.soundGameOver.currentTime = 0;
+        this.soundGameOver.play();
+
+        this.isGameOver = true;
 
         if (this.treatInterval) clearInterval(this.treatInterval);
         if (this.enemyInterval) clearInterval(this.enemyInterval);
+
+
+        this.enemies.forEach(e => e.active = false);
+        this.treats.forEach(t => t.active = false);
+
+        this.showGameOverScreen();
+
+        this.statusText.style.display = "none";
+
     }
+
+    starGame() {
+
+        if (this.gus) {
+            console.warn("starGame() llamado pero gus ya existe, no creo otro.");
+            return;
+
+        }
+
+        this.musicMenu.pause();
+        this.musicGame.currentTime = 0;
+        this.musicGame.play();
+
+        this.statusText.style.display = "none";
+
+        this.lives = this.maxLives;
+        this.updateLivesDisplay();
+
+        this.progressPoints = 0;
+        this.updateProgressBar();
+
+
+        this.gameContainer.classList.add("playing");
+        this.step = 30;
+
+        this.createGus();
+        this.createTreats();
+        this.createEnemies();
+        this.updateScoreText();
+    }
+
 
     restartGame() {
         this.isGameOver = false;
         this.score = 0;
 
-        this.statusText.style.display = "none";
+        this.statusText.style.display = "block";
+        this.statusText.innerText = "Pulsa ESPACIO para comenzar";
+
         this.scoreText.innerText = `Puntos: ${this.score}`;
 
         this.gameContainer.innerHTML = "";
+        this.gameContainer.classList.remove("playing");
 
         this.gus = null;
         this.treats = [];
-        this.enemy = null;
+        this.enemies = [];
 
         if (this.treatInterval) clearInterval(this.treatInterval);
         if (this.enemyInterval) clearInterval(this.enemyInterval);
-        if (this.enemyTimeout) clearTimeout(this.enemyTimeout);
+
         this.treatInterval = null;
         this.enemyInterval = null;
-        this.enemyTimeout = null;
 
+        const livesContainer = document.createElement("div");
+        livesContainer.id = "livesContainer";
+        this.gameContainer.appendChild(livesContainer);
+        this.livesContainer = livesContainer;
 
-        setTimeout(() => {
-            this.statusText.style.display = "block";
-            this.statusText.innerText = "Pulsa ESPACIO para comenzar";
-        }, 300);
+        const progressContainer = document.createElement("div");
+        progressContainer.id = "progressContainer";
+        progressContainer.innerHTML = `
+        <div id="progressBar">
+            <div id="progressFill"></div>
+        </div>
+    `;
+        this.gameContainer.appendChild(progressContainer);
+        this.progressContainer = progressContainer;
+        this.progressFill = progressContainer.querySelector("#progressFill");
+
+        this.lives = this.maxLives;
+        this.updateLivesDisplay();
+
+        this.progressPoints = 0;
+        this.updateProgressBar();
+
+        this.showStartScreen();
     }
 
-
-
-
-    starGame() {
-        this.statusText.style.display = "none";
-        this.createGus();
-        this.createTreats();
-        this.createEnemy();
-        this.updateScoreText();
-    }
 
     createGus() {
         const gus = document.createElement("div");
+
         gus.id = "gus";
         this.gameContainer.appendChild(gus);
         this.gus = gus;
@@ -140,7 +310,6 @@ class Game {
 
         this.updateGusposition();
     }
-
 
     moveGus(key) {
 
@@ -171,11 +340,20 @@ class Game {
         if (this.gusX > maxX) this.gusX = maxX;
 
         this.updateGusposition();
-
     }
 
+    updateGusSpeed() {
+        this.step = 20;
+
+        if (this.score > 20) this.step = 30;
+        if (this.score > 50) this.step = 80;
+        if (this.score > 100) this.step = 110;
+        if (this.score > 150) this.step = 160;
+        if (this.score > 200) this.step = 300;
+    }
+
+
     createTreats() {
-        const treatTypes = ["normal", "bonus", "fast"];
 
         for (let i = 0; i < this.maxTreats; i++) {
             const treat = document.createElement("div");
@@ -183,11 +361,19 @@ class Game {
             treat.style.position = "absolute";
             treat.style.width = `${this.treatSize}px`;
             treat.style.height = `${this.treatSize}px`;
+            treat.style.backgroundSize = "contain";
+            treat.style.backgroundRepeat = "no-repeat";
+            treat.style.backgroundPosition = "center";
 
-            const randomType = treatTypes[Math.floor(Math.random() * treatTypes.length)];
-            treat.classList.add(`treat--${randomType}`);
 
             this.gameContainer.appendChild(treat);
+
+
+            const randomType =
+                this.treatTypes[Math.floor(Math.random() * this.treatTypes.length)];
+
+            treat.classList.add(`treat--${randomType.name}`);
+
 
             const treatObj = {
                 el: treat,
@@ -195,7 +381,13 @@ class Game {
                 y: 0,
                 active: true,
                 type: randomType,
-                speed: this.treatMinSpeed + Math.random() * (this.treatMaxSpeed - this.treatMinSpeed)
+
+                speed:
+                    (this.treatMinSpeed +
+                        Math.random() *
+                        (this.treatMaxSpeed - this.treatMinSpeed)) *
+                    randomType.speedFactor,
+                value: randomType.value,
             };
 
             this.placeTreatRandomly(treatObj);
@@ -206,6 +398,7 @@ class Game {
             this.moveTreats();
             this.checkTreatCollisions();
         }, 50);
+
     }
 
     moveTreats() {
@@ -231,7 +424,6 @@ class Game {
     }
 
     placeTreatRandomly(treatObj) {
-
         const containerWidth = this.gameContainer.clientWidth;
         const containerHeight = this.gameContainer.clientHeight;
 
@@ -243,98 +435,27 @@ class Game {
         const extraOffset = Math.random() * containerHeight;
         treatObj.y = -this.treatSize - extraOffset;
 
+
+        const randomType =
+            this.treatTypes[Math.floor(Math.random() * this.treatTypes.length)];
+
+        treatObj.type = randomType;
+        treatObj.value = randomType.value;
+        treatObj.speed =
+            (this.treatMinSpeed +
+                Math.random() *
+                (this.treatMaxSpeed - this.treatMinSpeed)) *
+            randomType.speedFactor;
+
+
+        treatObj.el.className = "treat";
+        treatObj.el.classList.add(`treat--${randomType.name}`);
+
         treatObj.el.style.left = `${treatObj.x}px`;
         treatObj.el.style.top = `${treatObj.y}px`;
+
     }
 
-    createEnemy() {
-        if (!this.enemy) {
-            const enemy = document.createElement("div");
-            enemy.id = "enemy";
-
-            this.gameContainer.appendChild(enemy);
-            this.enemy = enemy;
-
-            this.enemyInterval = setInterval(() => {
-                this.moveEnemy();
-                this.checkEnemyCollision();
-            }, 50);
-        }
-
-        this.enemyActive = true;
-        this.enemy.style.display = "block";
-        this.placeEnemyRandomly();
-    }
-
-    moveEnemy() {
-        if (!this.enemy) return;
-        if (this.isGameOver) return;
-        if (!this.enemyActive) return;
-
-
-        this.enemyY += this.enemySpeed;
-
-        const marginBottom = 10;
-        const maxY = this.gameContainer.clientHeight - this.enemySize - marginBottom;
-
-        if (this.enemyY > maxY) {
-            this.despawnEnemyAndScheduleRespawn();
-            return;
-        }
-
-        this.enemy.style.left = `${this.enemyX}px`;
-        this.enemy.style.top = `${this.enemyY}px`;
-    }
-
-    placeEnemyRandomly() {
-        if (!this.enemy) return;
-
-        const containerWidth = this.gameContainer.clientWidth;
-
-        const marginX = 20;
-
-        const maxX = containerWidth - this.enemySize - marginX;
-
-        this.enemyX = Math.floor(marginX + Math.random() * maxX);
-
-        this.enemyY = -this.enemySize;
-
-        this.enemy.style.width = `${this.enemySize}px`;
-        this.enemy.style.height = `${this.enemySize}px`;
-        this.enemy.style.left = `${this.enemyX}px`;
-        this.enemy.style.top = `${this.enemyY}px`;
-        this.enemy.style.position = "absolute";
-    }
-
-    despawnEnemyAndScheduleRespawn() {
-        if (!this.enemy) return;
-
-        this.enemyActive = false;
-        this.enemy.style.display = "none";
-
-
-        const delay = Math.floor(Math.random() * (this.enemyMaxDelay - this.enemyMinDelay + 1)
-        ) + this.enemyMinDelay;
-
-        if (this.enemyTimeout) {
-            clearTimeout(this.enemyTimeout);
-        }
-
-        this.enemyTimeout = setTimeout(() => {
-            this.placeEnemyRandomly();
-            this.enemy.style.display = "block";
-            this.enemyActive = true;
-        }, delay);
-    }
-
-    updateGusposition() {
-        this.gus.style.left = `${this.gusX}px`;
-        this.gus.style.top = `${this.gusY}px`;
-    }
-
-    updateScoreText() {
-        this.scoreText.innerText = `Puntos ${this.score}`
-    }
 
     checkTreatCollisions() {
 
@@ -358,35 +479,194 @@ class Game {
                 gusBotton > treatTop;
 
             if (isColliding) {
-                this.score++;
-                this.updateScoreText();
 
+                this.soundTreat.currentTime = 0;
+                this.soundTreat.play();
+
+                this.gainPoints(treatObj.value);
                 this.placeTreatRandomly(treatObj);
             }
         });
     }
 
-    checkEnemyCollision() {
-        if (!this.gus || !this.enemy || this.isGameOver || !this.enemyActive) return;
+    createEnemies() {
+        for (let i = 0; i < this.maxEnemies; i++) {
 
-        const gusRect = this.gus.getBoundingClientRect();
-        const enemyRect = this.enemy.getBoundingClientRect();
+            const randomType = this.enemyTypes[Math.floor(Math.random() * this.enemyTypes.length)];
 
-        const padding = 10;
-        const gusPadding = 8;
-        const enemyPadding = 6;
+            const enemy = document.createElement("div");
+            enemy.classList.add("enemy", randomType.className);
 
-        const overlap =
-            gusRect.left + this.gusPadding < enemyRect.right - this.enemyPadding &&
-            gusRect.right - this.gusPadding > enemyRect.left + this.enemyPadding &&
-            gusRect.top + this.gusPadding < enemyRect.bottom - this.enemyPadding &&
-            gusRect.bottom - this.gusPadding > enemyRect.top + this.enemyPadding;
+            enemy.style.position = "absolute";
+            enemy.style.width = `${randomType.size}px`;
+            enemy.style.height = `${randomType.size}px`;
 
-        if (!overlap) return;
+            this.gameContainer.appendChild(enemy);
 
-        this.handleGameOver();
+            const baseSpeed = this.getEnemySpeed();
+
+            const enemyObj = {
+                el: enemy,
+                x: 0,
+                y: 0,
+                type: randomType,
+                active: true,
+                baseSpeed: baseSpeed,
+                speed: baseSpeed * randomType.speedFactor
+            };
+
+            this.placeEnemyRandomly(enemyObj);
+            this.enemies.push(enemyObj);
+        }
+
+        this.enemyInterval = setInterval(() => {
+            this.moveEnemies();
+            this.checkEnemiesCollision();
+        }, 50);
     }
 
+    moveEnemies() {
+        if (this.isGameOver) return;
+
+        const marginBottom = 10;
+
+        this.enemies.forEach((enemyObj) => {
+            if (!enemyObj.active) return;
+
+            const enemyHeight = enemyObj.type.size;
+            const maxY = this.gameContainer.clientHeight - enemyHeight - marginBottom;
+
+            enemyObj.y += enemyObj.speed;
+
+            if (enemyObj.y > maxY) {
+                this.placeEnemyRandomly(enemyObj);
+                return;
+            }
+
+            enemyObj.el.style.left = `${enemyObj.x}px`;
+            enemyObj.el.style.top = `${enemyObj.y}px`;
+        });
+    }
+
+    getEnemySpeed() {
+        const baseSpeed =
+            this.enemyMinSpeed +
+            Math.random() * (this.enemyMaxSpeed - this.enemyMinSpeed);
+
+        const difficultyMultiplier = 1 + this.score * 0.02;
+
+        return baseSpeed * difficultyMultiplier;
+    }
+
+    placeEnemyRandomly(enemyObj) {
+        const containerWidth = this.gameContainer.clientWidth;
+        const marginX = 20;
+
+        const enemyWidth = enemyObj.type.size;
+        const enemyHeight = enemyObj.type.size;
+
+        const maxX = containerWidth - enemyWidth - marginX;
+
+        enemyObj.x = Math.floor(marginX + Math.random() * maxX);
+
+        enemyObj.y = -enemyHeight - Math.random() * 100;
+
+        const baseSpeed = this.getEnemySpeed();
+        enemyObj.baseSpeed = baseSpeed;
+        enemyObj.speed = baseSpeed * enemyObj.type.speedFactor;
+
+        enemyObj.el.style.left = `${enemyObj.x}px`;
+        enemyObj.el.style.top = `${enemyObj.y}px`;
+    }
+
+
+    checkEnemiesCollision() {
+
+        if (!this.gus || this.isGameOver) return;
+
+        const gusLeft = this.gusX + this.gusPadding;
+        const gusRight = this.gusX + this.gusSize - this.gusPadding;
+        const gusTop = this.gusY + this.gusPadding;
+        const gusBottom = this.gusY + this.gusSize - this.gusPadding;
+
+        this.enemies.forEach((enemyObj) => {
+            const size = enemyObj.type.size;
+
+            const enemyLeft = enemyObj.x + this.enemyPadding;
+            const enemyRight = enemyObj.x + size - this.enemyPadding;
+            const enemyTop = enemyObj.y + this.enemyPadding;
+            const enemyBottom = enemyObj.y + size - this.enemyPadding;
+
+            const overlap =
+                gusLeft < enemyRight &&
+                gusRight > enemyLeft &&
+                gusTop < enemyBottom &&
+                gusBottom > enemyTop;
+
+            if (overlap) {
+
+                this.soundHit.currentTime = 0;
+                this.soundHit.play();
+
+                this.lives--;
+                this.updateLivesDisplay();
+
+                this.placeEnemyRandomly(enemyObj);
+
+                if (this.lives <= 0) {
+                    this.handleGameOver();
+                }
+            }
+        });
+    }
+
+    updateGusposition() {
+        this.gus.style.left = `${this.gusX}px`;
+        this.gus.style.top = `${this.gusY}px`;
+    }
+
+    updateScoreText() {
+        this.scoreText.innerText = `Puntos: ${this.score}`;
+    }
+
+    updateLivesDisplay() {
+        if (!this.livesContainer) return;
+
+        this.livesContainer.innerHTML = "";
+
+        for (let i = 0; i < this.lives; i++) {
+            const heart = document.createElement("span");
+            heart.classList.add("heart");
+            heart.textContent = "❤️";
+            this.livesContainer.appendChild(heart);
+        }
+    }
+
+    updateProgressBar() {
+        if (!this.progressFill) return;
+
+        const ratio = Math.min(this.progressPoints / this.pointsPerLife, 1);
+        this.progressFill.style.width = `${ratio * 100}%`;
+    }
+
+    gainPoints(amount) {
+
+        this.score += amount;
+        this.updateScoreText();
+
+        this.progressPoints += amount;
+
+        while (this.progressPoints >= this.pointsPerLife) {
+            this.progressPoints -= this.pointsPerLife;
+
+            this.lives++;
+            this.updateLivesDisplay();
+        }
+
+        this.updateProgressBar();
+
+        this.updateGusSpeed();
+    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {

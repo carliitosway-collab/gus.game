@@ -6,15 +6,11 @@ body {
     background-repeat: repeat-x;
     background-position: 0 0;
     text-align: center;
-
-
 }
 
 h1 {
     margin-top: 20px;
 }
-
-
 
 #statusText {
     font-size: 18px;
@@ -35,36 +31,155 @@ h1 {
     transition: none;
 }
 
+#start-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.start-panel {
+    position: relative;
+    background: #e6ce9d;
+    padding: 30px;
+    border-radius: 26px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    border: 12px solid transparent;
+}
+
+.start-title {
+    margin: 0 0 4px 0;
+    font-size: 28px;
+    text-align: center;
+}
+
+
+.start-subtitle {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    text-align: center;
+    color: #444;
+}
+
+.start-section {
+    margin-bottom: 14px;
+}
+
+.start-section h2 {
+    margin: 6px 0;
+}
+
+.start-section ul {
+    margin: 4px 0 0 18px;
+    padding: 0;
+    font-size: 14px;
+}
+
+.legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.legend-box {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    flex-shrink: 0;
+}
+
+.life-icon {
+    font-size: 20px;
+    margin-right: 4px;
+}
+
+.start-cta {
+    margin-top: 12px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 15px;
+}
 
 #gus {
-    outline: 1px solid red;
     position: absolute;
     transition: none;
     width: 80px;
     height: 80px;
-    background-image: url(./assets/assets.gus2..png);
+    background-image: url(./assets/GUSZILLA.png);
     background-size: 80px 80px;
     background-position: center;
     background-repeat: no-repeat;
 }
 
-.gus.right {
+.gus-right {
     transform: scaleX(1);
 }
 
-.gus.left {
+.gus-left {
     transform: scaleX(-1);
 }
 
-.treat {
-
-    height: 30px;
-    width: 30px;
+#livesContainer {
     position: absolute;
-    background-color: rgb(228, 232, 31);
-    border-radius: 50px;
+    top: 10px;
+    right: 15px;
+    display: flex;
+    gap: 8px;
+    z-index: 20;
+}
+
+.heart {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+    line-height: 24px;
+    text-align: center;
+    color: red;
+}
+
+#progressContainer {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+}
+
+#progressBar {
+    width: 200px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #ffffff;
+}
+
+#progressFill {
+    width: 0%;
+    height: 100%;
+    background: #4caf50;
+    transition: width 0.2s linear;
+}
+
+.treat {
+    height: 40px;
+    width: 40px;
+    position: absolute;
+    pointer-events: none;
     animation: spin 1s linear infinite;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+
 }
 
 @keyframes spin {
@@ -78,26 +193,73 @@ h1 {
 }
 
 .treat--normal {
-    background-color: #ffcc00;
-    background-image: url(./assets/961c0vj8vp331.jpg);
-    background-size: cover;
-    background-repeat: no-repeat;
+    background-image: url(./assets/hueso\ normal\ .png);
 }
 
+
 .treat--bonus {
-    background-color: #00c8ff;
+    background-image: url(./assets/hueso\ bonus.png);
 }
 
 .treat--fast {
-    background-color: #ff66aa;
+    background-image: url(./assets/hueso\ fast.png);
+}
+
+.treat--rare {
+    background-image: url(./assets/hueso\ rare.png);
+}
+
+.treat--cookie {
+    background-image: url(./assets/hueso\ cookie.png);
+}
+
+.playing .treat {
+    width: 80px !important;
+    height: 80px !important;
 }
 
 
-#enemy {
+.enemy {
     position: absolute;
-    background-color: rgb(240, 11, 11);
-    border-radius: 30%;
-    border-color: aliceblue;
+    background-size: cover;
+    background-repeat: no-repeat;
     height: 30px;
     width: 30px;
+}
+
+.enemy1-easy {
+    background-image: url(./assets/OREO.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.enemy1-medium {
+    background-image: url(./assets/OREO.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.enemy1-hard {
+    background-image: url(./assets/OREO.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+
+.enemy2-easy {
+    background-image: url(./assets/PAPAYA.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.enemy2-medium {
+    background-image: url(./assets/PAPAYA.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.enemy2-hard {
+    background-image: url(./assets/PAPAYA.png);
+    background-size: contain;
+    background-repeat: no-repeat;
 }
