@@ -4,9 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gus Game</title>
-
+    <title>Candy Gus</title>
     <link rel="stylesheet" href="./style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -20,103 +22,92 @@
 
                 <div class="start-section">
                     <h2>Controles</h2>
-                    <ul>
-                        <li><strong>← →</strong> Mover a Gus</li>
-                        <li><strong>ESPACIO</strong> Empezar partida</li>
-                        <li><strong>ENTER</strong>Reiniciar tras Game Over</li>
+                    <ul class="controls-list">
+                        <li>
+                            <span class="key">← →</span>
+                            <span class="action">Mover a Gus</span>
+                        </li>
+
+                        <li>
+                            <span class="key">ESPACIO</span>
+                            <span class="action">Empezar partida</span>
+                        </li>
+
+                        <li>
+                            <span class="key">ENTER</span>
+                            <span class="action">Reiniciar tras Game Over</span>
+                        </li>
                     </ul>
                 </div>
-
                 <div class="start-section">
                     <h2>Chuches</h2>
-
                     <div class="legend-row">
                         <div class="legend-box treat treat--normal"></div>
-                        <span>Normal (+1 punto)</span>
+                        <span><strong>Normal</strong> (+1 punto)</span>
                     </div>
-
                     <div class="legend-row">
                         <div class="legend-box treat treat--bonus"></div>
-                        <span>Bonus (+3 puntos)</span>
+                        <span><strong>Bonus</strong> (+3 puntos)</span>
                     </div>
-
                     <div class="legend-row">
                         <div class="legend-box treat treat--fast"></div>
-                        <span>Rápida (+1 punto, cae más rápido)</span>
+                        <span><strong>Rápida</strong> (+1 punto, cae más rápido)</span>
                     </div>
-
                     <div class="legend-row">
                         <div class="legend-box treat treat--rare"></div>
-                        <span>Rara (+5 puntos)</span>
+                        <span><strong>Rara</strong> (+5 punto)</span>
                     </div>
-
                     <div class="legend-row">
                         <div class="legend-box treat treat--cookie"></div>
                         <span>Cookie (+2 puntos, cae más lenta)</span>
                     </div>
                 </div>
-
-
                 <div class="start-section">
                     <h2>Vida</h2>
-                    <div class="legend-row">
+
+                    <div class="legend-row life-row">
                         <span class="life-icon">❤️</span>
                         <span>Tienes<strong>3 vida</strong>.Cuídado con los Gatos.</span>
                     </div>
                 </div>
-
                 <p class="start-cta">Pulsa <strong>ESPACIO</strong> para empezar</p>
-
             </div>
-
-
-
             <div id="gameover-content" style="display: none;">
-
-
                 <h1 class="start-litle">Game Over</h1>
                 <p class="start-subtitle">
                     Gus a sido atrapado. ¿Listo para intentarlo de nuevo?
                 </p>
-
                 <div class="start-section">
                     <h2>Tu puntuacion</h2>
                     <p><strong>Puntos:</strong> <span id="finalScoreElement">0</span></p>
                 </div>
-
                 <div class="start-section">
                     <p>Pulsa<strong>ENTER</strong> o has click en el boton para volver a jugar.</p>
                 </div>
-
                 <p class="start-cta">
                     <button id="replayButton">Volver a jugar</button>
                 </p>
             </div>
-
-
-
         </div>
-
     </div>
 
+    <div class="game-wrapper">
+        <header class="game-header">
+            <h1 class="game-title">Candy Gus</h1>
+            <p id="statusText">Preparando el juego de Gus...</p>
+            <p id="scoreText">Puntos: 0</p>
+        </header>
+        <div id="game-container">
+            <div id="livesContainer"></div>
 
-
-    <h1>Gus Game</h1>
-    <p id="statusText">Preparando el juego de Gus...</p>
-    <p id="scoreText">Puntos: 0</p>
-
-    <div id="game-container">
-        <div id="livesContainer"></div>
-
-        <div id="progressContainer">
-            <div id="progressBar">
-                <div id="progressFill"></div>
+            <div id="progressContainer">
+                <div id="progressBar">
+                    <div id="progressFill"></div>
+                </div>
             </div>
         </div>
     </div>
-
     <script src="./script.js"></script>
-
 </body>
 
 </html>

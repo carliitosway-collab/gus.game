@@ -45,9 +45,9 @@ class Game {
 
         this.treats = [];
         this.treatSize = 30;
-        this.maxTreats = 3;
-        this.treatMinSpeed = 2;
-        this.treatMaxSpeed = 5;
+        this.maxTreats = 6;
+        this.treatMinSpeed = 3;
+        this.treatMaxSpeed = 8;
         this.treatTypes = [
             { name: "normal", value: 1, speedFactor: 1 },
             { name: "bonus", value: 3, speedFactor: 2 },
@@ -221,7 +221,6 @@ class Game {
         if (this.gus) {
             console.warn("starGame() llamado pero gus ya existe, no creo otro.");
             return;
-
         }
 
         this.musicMenu.pause();
@@ -245,7 +244,6 @@ class Game {
         this.createEnemies();
         this.updateScoreText();
     }
-
 
     restartGame() {
         this.isGameOver = false;
@@ -293,7 +291,6 @@ class Game {
 
         this.showStartScreen();
     }
-
 
     createGus() {
         const gus = document.createElement("div");
@@ -351,7 +348,6 @@ class Game {
         if (this.score > 150) this.step = 160;
         if (this.score > 200) this.step = 300;
     }
-
 
     createTreats() {
 
@@ -412,12 +408,9 @@ class Game {
             treatObj.y += treatObj.speed;
 
             if (treatObj.y > maxY) {
-                setTimeout(() => {
-                    this.placeTreatRandomly(treatObj);
-                }, Math.random() * 1000);
+                this.placeTreatRandomly(treatObj);
                 return;
             }
-
             treatObj.el.style.left = `${treatObj.x}px`;
             treatObj.el.style.top = `${treatObj.y}px`;
         });
@@ -455,7 +448,6 @@ class Game {
         treatObj.el.style.top = `${treatObj.y}px`;
 
     }
-
 
     checkTreatCollisions() {
 
@@ -578,7 +570,6 @@ class Game {
         enemyObj.el.style.left = `${enemyObj.x}px`;
         enemyObj.el.style.top = `${enemyObj.y}px`;
     }
-
 
     checkEnemiesCollision() {
 
